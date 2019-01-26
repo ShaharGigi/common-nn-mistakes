@@ -57,8 +57,8 @@ class SimpleNet(nn.Module):
     def forward(self, x):
         batch_size = x.shape[0]
         x = F.relu(F.max_pool2d(self.conv1(x), 2))
-        #x = F.relu(F.max_pool2d(self.conv2_drop(self.conv2(x)), 2))
-        x = F.relu(F.max_pool2d(self.conv2(x), 2))
+        x = F.relu(F.max_pool2d(self.conv2_drop(self.conv2(x)), 2))
+        #x = F.relu(F.max_pool2d(self.conv2(x), 2))
         x = x.view(batch_size, -1)
         x = F.relu(self.fc1(x))
         x = F.dropout(x, training=self.training)
@@ -102,12 +102,12 @@ def test(model, test_loader):
 
 def train(model, optimizer, epoch, train_loader, test_loader):
     #for batch_idx, (data, target) in enumerate(train_loader):
-    model.train()
     for batch_idx, (data, target) in experiment.batch_loop(iterable=train_loader):
+        model.train()
         data, target = Variable(data), Variable(target)
-        optimizer.zero_grad()
         output = model(data)
         loss_t = F.nll_loss(output, target)
+        optimizer.zero_grad()
         loss_t.backward()
         optimizer.step()
 
@@ -165,7 +165,7 @@ def report_metric(val):
     return val
 
 def main():
-    global experiment, wrapped_loss, wrapped_acc
+    global experiment#, wrapped_loss, wrapped_acc
 
     # Get Data
     train_loader, test_loader = get_train_test()
@@ -177,20 +177,24 @@ def main():
 
     first_batch = next(iter(train_loader))
 
-#    for epoch in range(args.epochs):
     with missinglink_project.create_experiment(
             model=model,
             optimizer=optimizer,
             train_data_object=train_loader,
             metrics={'Loss': report_metric, 'Accuracy': report_metric}
             ) as experiment:
-        wrapped_loss = experiment.metrics['Loss']
-        wrapped_acc = experiment.metrics['Accuracy']
+        # wrapped_loss = experiment.metrics['Loss']
+        # wrapped_acc = experiment.metrics['Accuracy']
+        #for epoch in range(args.epochs):
         for epoch in experiment.epoch_loop(args.epochs):
-            train(model, optimizer, epoch, [first_batch] * 50, [first_batch])
+            #train(model, optimizer, epoch, [first_batch] * 50, [first_batch])
+            train(model, optimizer, epoch, [first_batch] * 50, [next(iter(test_loader))])
             #train(model, optimizer, epoch, [first_batch] * 50, test_loader)
             #train(model, optimizer, epoch, train_loader, test_loader)
-            #test(test_loader)
+
+        with experiment.test():
+            print("--Final test--")
+            test(model, test_loader)
     
     return model
 
