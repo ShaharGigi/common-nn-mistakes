@@ -57,7 +57,8 @@ class SimpleNet(nn.Module):
     def forward(self, x):
         batch_size = x.shape[0]
         x = F.relu(F.max_pool2d(self.conv1(x), 2))
-        x = F.relu(F.max_pool2d(self.conv2_drop(self.conv2(x)), 2))
+        #x = F.relu(F.max_pool2d(self.conv2_drop(self.conv2(x)), 2))
+        x = F.relu(F.max_pool2d(self.conv2(x), 2))
         x = x.view(batch_size, -1)
         x = F.relu(self.fc1(x))
         x = F.dropout(x, training=self.training)
@@ -77,17 +78,16 @@ def test(model, test_loader):
     test_loss = 0
     correct = 0
     seen = 0
-    for data, target in test_loader:
-        data = Variable(data)
-        target = Variable(target)
-        # `no_grad` so we don't use these calculations in backprop
-        with torch.no_grad():
+    # `no_grad` so we don't use these calculations in backprop
+    with torch.no_grad():
+        for data, target in test_loader:
+            data = Variable(data)
+            target = Variable(target)
             output = model(data)
             seen += len(output)
             
             # sum up batch loss
             test_loss += F.nll_loss(output, target, reduction='sum').item()
-
             
             # get the index of the max log-probability
             correct += get_correct_count(output, target)
@@ -96,14 +96,14 @@ def test(model, test_loader):
     test_accuracy = correct * 100.0 / seen
 
     print(
-       'Test set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)'.format(
+       'Test: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)'.format(
            test_loss, correct, seen, test_accuracy))
     return test_loss, test_accuracy
 
 def train(model, optimizer, epoch, train_loader, test_loader):
     #for batch_idx, (data, target) in enumerate(train_loader):
+    model.train()
     for batch_idx, (data, target) in experiment.batch_loop(iterable=train_loader):
-        model.train()
         data, target = Variable(data), Variable(target)
         optimizer.zero_grad()
         output = model(data)
