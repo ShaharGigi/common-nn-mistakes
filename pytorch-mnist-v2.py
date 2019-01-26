@@ -94,10 +94,6 @@ def test(model, test_loader):
 
     test_loss /= seen
     test_accuracy = correct * 100.0 / seen
-    experiment._update_metric_data('ml_val_Loss', test_loss)
-    experiment._update_metric_data('ml_val_Accuracy', test_accuracy)
-    # wrapped_acc(test_accuracy)
-    # wrapped_loss(test_loss)
 
     print(
        '\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
@@ -117,18 +113,21 @@ def train(model, optimizer, epoch, train_loader, test_loader):
 
         #train_accuracy = get_correct_count(output, target) * 100.0 / len(target)
         if batch_idx % args.log_interval == 0:
-            with torch.no_grad():
-                train_loss = loss_t.item()
-                train_accuracy = get_correct_count(output, target) * 100.0 / len(target)
-                experiment._update_metric_data('ml_train_Loss', train_loss)
-                experiment._update_metric_data('ml_train_Accuracy', train_accuracy)
-                # wrapped_loss(train_loss)
-                # wrapped_acc(train_accuracy)
-                print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
-                   epoch, batch_idx, len(train_loader),
-                   100. * batch_idx / len(train_loader), train_loss))
-                with experiment.validation():
-                    test_loss_item, test_accuracy_item = test(model, test_loader)
+            train_loss = loss_t.item()
+            train_accuracy = get_correct_count(output, target) * 100.0 / len(target)
+            experiment._update_metric_data('ml_train_Loss', train_loss)
+            experiment._update_metric_data('ml_train_Accuracy', train_accuracy)
+            # wrapped_loss(train_loss)
+            # wrapped_acc(train_accuracy)
+            print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
+                epoch, batch_idx, len(train_loader),
+                100. * batch_idx / len(train_loader), train_loss))
+            with experiment.validation():
+                test_loss, test_accuracy = test(model, test_loader)
+                experiment._update_metric_data('ml_val_Loss', test_loss)
+                experiment._update_metric_data('ml_val_Accuracy', test_accuracy)
+                # wrapped_acc(test_accuracy)
+                # wrapped_loss(test_loss)
 
 
 def get_train_test():
@@ -174,7 +173,7 @@ def main():
     # instatiate NN model
     model = SimpleNet()
 
-    optimizer = optim.SGD(model.parameters(), lr=args.lr)#, momentum=args.momentum)
+    optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
 
     first_batch = next(iter(train_loader))
 
@@ -188,9 +187,9 @@ def main():
         wrapped_loss = experiment.metrics['Loss']
         wrapped_acc = experiment.metrics['Accuracy']
         for epoch in experiment.epoch_loop(args.epochs):
-            #train(model, optimizer, epoch, [first_batch] * 50, [first_batch])
+            train(model, optimizer, epoch, [first_batch] * 50, [first_batch])
             #train(model, optimizer, epoch, [first_batch] * 50, test_loader)
-            train(model, optimizer, epoch, train_loader, test_loader)
+            #train(model, optimizer, epoch, train_loader, test_loader)
             #test(test_loader)
     
     return model
