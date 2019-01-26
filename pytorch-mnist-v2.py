@@ -96,7 +96,7 @@ def test(model, test_loader):
     test_accuracy = correct * 100.0 / seen
 
     print(
-       '\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
+       'Test set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)'.format(
            test_loss, correct, seen, test_accuracy))
     return test_loss, test_accuracy
 
