@@ -100,7 +100,7 @@ def test(model, test_loader):
            test_loss, correct, seen, test_accuracy))
     return test_loss, test_accuracy
 
-def train(model, optimizer, epoch, train_loader, test_loader):
+def train(model, optimizer, epoch, train_loader, validation_loader):
     #for batch_idx, (data, target) in enumerate(train_loader):
     for batch_idx, (data, target) in experiment.batch_loop(iterable=train_loader):
         model.train()
@@ -123,9 +123,9 @@ def train(model, optimizer, epoch, train_loader, test_loader):
                 epoch, batch_idx, len(train_loader),
                 100. * batch_idx / len(train_loader), train_loss))
             with experiment.validation():
-                test_loss, test_accuracy = test(model, test_loader)
-                experiment._update_metric_data('ml_val_Loss', test_loss)
-                experiment._update_metric_data('ml_val_Accuracy', test_accuracy)
+                val_loss, val_accuracy = test(model, validation_loader)
+                experiment._update_metric_data('ml_val_Loss', val_loss)
+                experiment._update_metric_data('ml_val_Accuracy', val_accuracy)
                 # wrapped_acc(test_accuracy)
                 # wrapped_loss(test_loss)
 
