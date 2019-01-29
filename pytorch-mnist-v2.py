@@ -40,6 +40,9 @@ mnist_std = 0.3081
 
 torch.manual_seed(args.seed)
 
+ACC_METRIC = 'Accuracy'
+LOSS_METRIC = 'Loss'
+
 ################################
 ## NN Architecture
 ################################
@@ -122,23 +125,26 @@ def train(model, optimizer, epoch, train_loader, validation_loader):
         loss_t.backward()
         optimizer.step()
 
-        #train_accuracy = get_correct_count(output, target) * 100.0 / len(target)
         if batch_idx % args.log_interval == 0:
             train_loss = loss_t.item()
             train_accuracy = get_correct_count(output, target) * 100.0 / len(target)
-            experiment._update_metric_data('ml_train_Loss', train_loss)
-            experiment._update_metric_data('ml_train_Accuracy', train_accuracy)
+            # experiment._update_metric_data('ml_train_Loss', train_loss)
+            # experiment._update_metric_data('ml_train_Accuracy', train_accuracy)
             # wrapped_loss(train_loss)
             # wrapped_acc(train_accuracy)
+            experiment.metrics[LOSS_METRIC](train_loss)
+            experiment.metrics[ACC_METRIC](train_accuracy)
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                 epoch, batch_idx, len(train_loader),
                 100. * batch_idx / len(train_loader), train_loss))
             with experiment.validation():
                 val_loss, val_accuracy = test(model, validation_loader)
-                experiment._update_metric_data('ml_val_Loss', val_loss)
-                experiment._update_metric_data('ml_val_Accuracy', val_accuracy)
+                # experiment._update_metric_data('ml_val_Loss', val_loss)
+                # experiment._update_metric_data('ml_val_Accuracy', val_accuracy)
                 # wrapped_acc(test_accuracy)
                 # wrapped_loss(test_loss)
+                experiment.metrics[LOSS_METRIC](val_loss)
+                experiment.metrics[ACC_METRIC](val_accuracy)
 
 
 def get_train_test():
@@ -190,7 +196,7 @@ def main():
             model=model,
             optimizer=optimizer,
             train_data_object=train_loader,
-            metrics={'Loss': report_metric, 'Accuracy': report_metric}
+            metrics={LOSS_METRIC: report_metric, ACC_METRIC: report_metric}
             ) as experiment:
         # wrapped_loss = experiment.metrics['Loss']
         # wrapped_acc = experiment.metrics['Accuracy']
