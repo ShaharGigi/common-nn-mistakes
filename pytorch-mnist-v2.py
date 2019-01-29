@@ -11,7 +11,6 @@ import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.autograd import Variable
 
-# livelossplot requires inline matplotlib
 import missinglink
 
 missinglink_project = missinglink.PyTorchProject(project_token='KzcbCxZWjewiqxCi')
@@ -48,6 +47,7 @@ torch.manual_seed(args.seed)
 class SimpleNet(nn.Module):
     def __init__(self):
         super(SimpleNet, self).__init__()
+
         self.features = nn.Sequential(
             nn.Conv2d(1, 10, kernel_size=5),
             nn.MaxPool2d(2),
@@ -58,7 +58,7 @@ class SimpleNet(nn.Module):
             nn.MaxPool2d(2),
             nn.ReLU(),
         )
-        
+
         self.classifier = nn.Sequential(
             nn.Linear(320, 50),
             nn.ReLU(),
@@ -112,9 +112,10 @@ def test(model, test_loader):
 
 def train(model, optimizer, epoch, train_loader, validation_loader):
     #for batch_idx, (data, target) in enumerate(train_loader):
-    model.train()
     for batch_idx, (data, target) in experiment.batch_loop(iterable=train_loader):
+        model.train()
         data, target = Variable(data), Variable(target)
+
         output = model(data)
         loss_t = F.nll_loss(output, target)
         optimizer.zero_grad()
@@ -185,8 +186,6 @@ def main():
 
     optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
 
-    first_batch = next(iter(train_loader))
-
     with missinglink_project.create_experiment(
             model=model,
             optimizer=optimizer,
@@ -195,10 +194,12 @@ def main():
             ) as experiment:
         # wrapped_loss = experiment.metrics['Loss']
         # wrapped_acc = experiment.metrics['Accuracy']
+    
+        first_batch = next(iter(train_loader))
         #for epoch in range(args.epochs):
         for epoch in experiment.epoch_loop(args.epochs):
-            #train(model, optimizer, epoch, [first_batch] * 50, [first_batch])
-            train(model, optimizer, epoch, [first_batch] * 50, [next(iter(test_loader))])
+            train(model, optimizer, epoch, [first_batch] * 50, [first_batch])
+            #train(model, optimizer, epoch, [first_batch] * 50, [next(iter(test_loader))])
             #train(model, optimizer, epoch, [first_batch] * 50, test_loader)
             #train(model, optimizer, epoch, train_loader, test_loader)
 
