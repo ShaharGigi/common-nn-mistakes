@@ -91,11 +91,14 @@ def test(model, test_loader):
     test_loss = 0
     correct = 0
     seen = 0
+
     # `no_grad` so we don't use these calculations in backprop
     with torch.no_grad():
         for data, target in test_loader:
             data = Variable(data)
             target = Variable(target)
+
+            # inference
             output = model(data)
             seen += len(output)
             
@@ -119,8 +122,11 @@ def train(model, optimizer, epoch, train_loader, validation_loader):
         model.train()
         data, target = Variable(data), Variable(target)
 
+        # Inference
         output = model(data)
         loss_t = F.nll_loss(output, target)
+
+        # The iconic grad-back-step trio
         optimizer.zero_grad()
         loss_t.backward()
         optimizer.step()
@@ -128,10 +134,6 @@ def train(model, optimizer, epoch, train_loader, validation_loader):
         if batch_idx % args.log_interval == 0:
             train_loss = loss_t.item()
             train_accuracy = get_correct_count(output, target) * 100.0 / len(target)
-            # experiment._update_metric_data('ml_train_Loss', train_loss)
-            # experiment._update_metric_data('ml_train_Accuracy', train_accuracy)
-            # wrapped_loss(train_loss)
-            # wrapped_acc(train_accuracy)
             experiment.metrics[LOSS_METRIC](train_loss)
             experiment.metrics[ACC_METRIC](train_accuracy)
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
@@ -139,10 +141,6 @@ def train(model, optimizer, epoch, train_loader, validation_loader):
                 100. * batch_idx / len(train_loader), train_loss))
             with experiment.validation():
                 val_loss, val_accuracy = test(model, validation_loader)
-                # experiment._update_metric_data('ml_val_Loss', val_loss)
-                # experiment._update_metric_data('ml_val_Accuracy', val_accuracy)
-                # wrapped_acc(test_accuracy)
-                # wrapped_loss(test_loss)
                 experiment.metrics[LOSS_METRIC](val_loss)
                 experiment.metrics[ACC_METRIC](val_accuracy)
 
@@ -176,13 +174,13 @@ def get_train_test():
     return train_loader, test_loader
 
 ################################
-## Main Execution
+## Main
 ################################
 def report_metric(val):
     return val
 
 def main():
-    global experiment#, wrapped_loss, wrapped_acc
+    global experiment
 
     # Get Data
     train_loader, test_loader = get_train_test()
@@ -198,8 +196,6 @@ def main():
             train_data_object=train_loader,
             metrics={LOSS_METRIC: report_metric, ACC_METRIC: report_metric}
             ) as experiment:
-        # wrapped_loss = experiment.metrics['Loss']
-        # wrapped_acc = experiment.metrics['Accuracy']
     
         first_batch = next(iter(train_loader))
         #for epoch in range(args.epochs):
