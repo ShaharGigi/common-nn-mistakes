@@ -13,6 +13,8 @@ from torch.autograd import Variable
 
 import missinglink
 
+
+# Change the `project_token` to your own when trying to run this.
 missinglink_project = missinglink.PyTorchProject(project_token='KzcbCxZWjewiqxCi')
 
 ################################
@@ -117,9 +119,9 @@ def test(model, test_loader):
     return test_loss, test_accuracy
 
 def train(model, optimizer, epoch, train_loader, validation_loader):
+    model.train()
     #for batch_idx, (data, target) in enumerate(train_loader):
     for batch_idx, (data, target) in experiment.batch_loop(iterable=train_loader):
-        model.train()
         data, target = Variable(data), Variable(target)
 
         # Inference
@@ -134,15 +136,15 @@ def train(model, optimizer, epoch, train_loader, validation_loader):
         if batch_idx % args.log_interval == 0:
             train_loss = loss_t.item()
             train_accuracy = get_correct_count(output, target) * 100.0 / len(target)
-            experiment.metrics[LOSS_METRIC](train_loss)
-            experiment.metrics[ACC_METRIC](train_accuracy)
+            experiment.add_metric(LOSS_METRIC, train_loss)
+            experiment.add_metric(ACC_METRIC, train_accuracy)
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                 epoch, batch_idx, len(train_loader),
                 100. * batch_idx / len(train_loader), train_loss))
             with experiment.validation():
                 val_loss, val_accuracy = test(model, validation_loader)
-                experiment.metrics[LOSS_METRIC](val_loss)
-                experiment.metrics[ACC_METRIC](val_accuracy)
+                experiment.add_metric(LOSS_METRIC, val_loss)
+                experiment.add_metric(ACC_METRIC, val_accuracy)
 
 
 def get_train_test():
@@ -176,9 +178,6 @@ def get_train_test():
 ################################
 ## Main
 ################################
-def report_metric(val):
-    return val
-
 def main():
     global experiment
 
@@ -194,7 +193,6 @@ def main():
             model=model,
             optimizer=optimizer,
             train_data_object=train_loader,
-            metrics={LOSS_METRIC: report_metric, ACC_METRIC: report_metric}
             ) as experiment:
     
         first_batch = next(iter(train_loader))
