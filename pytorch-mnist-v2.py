@@ -69,7 +69,10 @@ class SimpleNet(nn.Module):
             nn.ReLU(),
             nn.Dropout(),
 
+            # Final linear classifier = logits
             nn.Linear(50, 10),
+
+            # Softmax = Normalization into probability distribution
             nn.LogSoftmax(dim=1),
         )
 
